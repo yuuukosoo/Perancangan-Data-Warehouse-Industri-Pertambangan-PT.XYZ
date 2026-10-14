@@ -7,16 +7,19 @@ This script runs the complete ETL pipeline without Airflow dependencies
 import pandas as pd
 import pymssql
 import logging
-import logging
 import time
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('etl_execution.log'),
+        logging.FileHandler('etl_execution.log', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
@@ -25,11 +28,11 @@ def get_sql_connection():
     """Create SQL Server connection"""
     try:
         conn = pymssql.connect(
-            server='localhost',
-            port=1433,
-            database='PTXYZ_DataWarehouse',
-            user='sa',
-            password='PTXYZSecure123!',
+            server=os.getenv('DB_HOST', 'localhost'),
+            port=int(os.getenv('DB_PORT', 1433)),
+            database=os.getenv('DB_NAME', 'PTXYZ_DataWarehouse'),
+            user=os.getenv('DB_USER', 'sa'),
+            password=os.getenv('MSSQL_SA_PASSWORD', 'YourSecurePassword123!'),
             timeout=30
         )
         return conn

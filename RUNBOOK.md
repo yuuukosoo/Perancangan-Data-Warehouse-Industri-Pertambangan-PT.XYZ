@@ -1,91 +1,96 @@
-# 📘 RUNBOOK DOKUMENTASI DATA WAREHOUSE INDUSTRI PERTAMBANGAN PT. XYZ
-**Mata Kuliah:** Kecerdasan Bisnis (Kode: 552010001389)  
-**Program Studi:** S1 Sains Data / Informatika / Sistem Informasi  
-**Repository Fork:** [https://github.com/yuuukosoo/Perancangan-Data-Warehouse-Industri-Pertambangan-PT.XYZ](https://github.com/yuuukosoo/Perancangan-Data-Warehouse-Industri-Pertambangan-PT.XYZ)  
-**Repository Upstream:** [https://github.com/sains-data/Perancangan-Data-Warehouse-Industri-Pertambangan-PT.XYZ](https://github.com/sains-data/Perancangan-Data-Warehouse-Industri-Pertambangan-PT.XYZ)  
+# LAPORAN TEKNIS DAN DOKUMENTASI SISTEM
+# PERANCANGAN DATA WAREHOUSE INDUSTRI PERTAMBANGAN PT. XYZ
+
+**Mata Kuliah:** Kecerdasan Bisnis  
+**Repository Utama (Upstream):** https://github.com/sains-data/Perancangan-Data-Warehouse-Industri-Pertambangan-PT.XYZ  
+**Repository Implementasi (Fork):** https://github.com/yuuukosoo/Perancangan-Data-Warehouse-Industri-Pertambangan-PT.XYZ  
 
 ---
 
 ## DAFTAR ISI
-1. [Ringkasan Eksekutif & Domain Bisnis](#1-ringkasan-eksekutif--domain-bisnis)
-2. [Arsitektur Sistem Data Warehouse](#2-arsitektur-sistem-data-warehouse)
-   - 2.1 Diagram Arsitektur End-to-End
-   - 2.2 Desain Dimensional Model (Star Schema)
-   - 2.3 Rincian Grain dan Tabel
-3. [Pemetaan Langkah README ke Perintah Otomatis](#3-pemetaan-langkah-readme-ke-perintah-otomatis)
-   - 3.1 Konfigurasi Environment (`.env`)
-   - 3.2 Orkestrasi Container Docker Compose
-   - 3.3 Inisialisasi Skema DWH
-   - 3.4 Eksekusi Pipeline ETL
-   - 3.5 Validasi Kepatuhan Otomatis
-4. [Bukti Hasil Eksekusi & Kesetaraan Benchmark](#4-bukti-hasil-eksekusi--kesetaraan-benchmark)
-   - 4.1 Tabel Perbandingan Jumlah Baris Data (Benchmark vs Realisasi)
-   - 4.2 Bukti Uji Integritas Referensial (Zero Orphan Check)
-   - 4.3 Bukti Uji Kesetaraan Agregat
-5. [Eksekusi Kueri Multidimensional OLAP](#5-eksekusi-kueri-multidimensional-olap)
-   - 5.1 Slice (Pemotongan Dimensi Tunggal)
-   - 5.2 Dice (Sub-cube Multi Kriteria)
-   - 5.3 Roll-up (Hierarki Waktu: Tahun -> Kuartal -> Bulan)
-   - 5.4 Drill-down (Analisis Rinci Per Karyawan & Site)
-   - 5.5 Pivot (Cross-tabulation Wilayah vs Tipe Material)
-6. [Kualitas ETL & Data Quality Handling](#6-kualitas-etl--data-quality-handling)
-7. [Kendala Teknis, Analisis Akar Masalah & Solusi](#7-kendala-teknis-analisis-akar-masalah--solusi)
-8. [Panduan Reproducibility (One-Command Runner)](#8-panduan-reproducibility-one-command-runner)
+
+1. [Latar Belakang dan Ruang Lingkup Bisnis](#1-latar-belakang-dan-ruang-lingkup-bisnis)
+2. [Spesifikasi Arsitektur dan Pemodelan Dimensional](#2-spesifikasi-arsitektur-dan-pemodelan-dimensional)
+   - 2.1 Arsitektur Aliran Data (Data Pipeline Architecture)
+   - 2.2 Desain Skema Bintang (Star Schema)
+   - 2.3 Definisi Grain, Kunci Utama, dan Integritas Relasi
+3. [Spesifikasi Teknis Lingkungan dan Prosedur Deployment](#3-spesifikasi-teknis-lingkungan-dan-prosedur-deployment)
+   - 3.1 Konfigurasi Parameter Lingkungan (.env)
+   - 3.2 Orkestrasi Layanan Basis Data (Docker Compose)
+   - 3.3 Inisialisasi Skema Basis Data DWH
+   - 3.4 Eksekusi Pipeline Ekstraksi, Transformasi, dan Pemuatan (ETL)
+   - 3.5 Prosedur Pengujian dan Validasi Integritas
+4. [Hasil Pengujian, Verifikasi, dan Kesetaraan Data Acuan](#4-hasil-pengujian-verifikasi-dan-kesetaraan-data-acuan)
+   - 4.1 Verifikasi Volume Data (Tabel Benchmark vs Hasil Implementasi)
+   - 4.2 Uji Integritas Referensial (Pemeriksaan Foreign Key Tanpa Orphan)
+   - 4.3 Verifikasi Agregasi Metrik Operasional dan Keuangan
+5. [Analisis Kueri Multidimensional (Online Analytical Processing - OLAP)](#5-analisis-kueri-multidimensional-online-analytical-processing---olap)
+   - 5.1 Operasi Slice (Pemfilteran Berdasarkan Wilayah Sumatera)
+   - 5.2 Operasi Dice (Kombinasi Wilayah Kalimantan dan Shift 1)
+   - 5.3 Operasi Roll-up (Hierarki Waktu: Tahun, Kuartal, Bulan)
+   - 5.4 Operasi Drill-down (Analisis Tingkat Operator dan Lokasi)
+   - 5.5 Operasi Pivot (Cross-Tabulation Komoditas per Wilayah Tambang)
+6. [Penanganan Kualitas Data (Data Quality) dan Transformasi](#6-penanganan-kualitas-data-data-quality-dan-transformasi)
+7. [Dokumentasi Kendala Teknis dan Mitigasi Sistem](#7-dokumentasi-kendala-teknis-dan-mitigasi-sistem)
+8. [Otomasi Eksekusi Sistem (Automation Runner)](#8-otomasi-eksekusi-sistem-automation-runner)
 
 ---
 
-## 1. RINGKASAN EKSEKUTIF & DOMAIN BISNIS
+## 1. LATAR BELAKANG DAN RUANG LINGKUP BISNIS
 
-PT XYZ merupakan perusahaan yang bergerak di bidang industri pertambangan terintegrasi dengan operasi penambangan material tambang (Metal dan Ore) yang tersebar di berbagai wilayah strategis di Indonesia, meliputi Sumatera, Kalimantan, dan Papua. Operasional pertambangan skala besar membutuhkan pengelolaan data yang terpusat, konsisten, dan akurat untuk memantau performa alat berat (*heavy equipment*), hasil produksi harian, efisiensi waktu kerja (*operating hours vs downtime*), serta kepatuhan anggaran proyek (*financial transactions*).
+PT XYZ merupakan entitas bisnis yang beroperasi di sektor industri pertambangan mineral dengan konsesi operasional yang tersebar di wilayah Sumatera, Kalimantan, dan Papua. Kompleksitas aktivitas penambangan mencakup eksploitasi material bijih (Ore) dan logam (Metal), pergerakan armada alat berat (*heavy equipment*), penjadwalan kerja multi-shift, serta pengelolaan anggaran operasional per proyek eksplorasi.
 
-Proyek Data Warehouse ini dibangun untuk memproses data mentah operasional tambang, menyaring anomali kualitas data, dan mentransformasikannya ke dalam arsitektur dimensional **Star Schema**. Sistem ini dirancang untuk dapat direplikasi secara penuh (*reproducible*) menggunakan teknologi kontainerisasi **Docker Compose**, menjamin seluruh proses dari ingestion data, transformasi, hingga validasi integritas dapat dijalankan secara otomatis dengan satu perintah.
+Tantangan utama yang dihadapi adalah dispersi data operasional harian yang masih tersimpan dalam format tabular terpisah (*raw CSV files*). Keadaan ini menyulitkan manajemen dalam menganalisis korelasi antara efisiensi pemanfaatan alat (*availability & downtime*), pencapaian target volume produksi, serta realisasi biaya proyek terhadap anggaran yang telah disetujui.
+
+Tujuan dari implementasi sistem ini adalah membangun repositori data terpadu berbasis arsitektur *Enterprise Data Warehouse* dengan pendekatan *Dimensional Modeling* (Kimball). Sistem ini memfasilitasi kebutuhan analitik lintas fungsi, memastikan integritas data melalui mekanisme ETL terotomasi, serta menyediakan fondasi bagi pelaporan analitik berbasis Online Analytical Processing (OLAP).
 
 ---
 
-## 2. ARSITEKTUR SISTEM DATA WAREHOUSE
+## 2. SPESIFIKASI ARSITEKTUR DAN PEMODELAN DIMENSIONAL
 
-### 2.1 Diagram Arsitektur End-to-End
+### 2.1 Arsitektur Aliran Data (Data Pipeline Architecture)
+
+Aliran data dirancang melalui tiga tingkatan utama: lapisan sumber data mentah (*raw data source*), lapisan penampungan sementara (*staging layer*), dan lapisan dimensional data warehouse (*star schema*).
 
 ```mermaid
 flowchart TD
-    subgraph Data_Sources ["📂 Sumber Data Mentah (Raw CSV)"]
-        CSV1["dataset_alat_berat_dw.csv<br/>(1,150 baris)"]
-        CSV2["dataset_production.csv<br/>(1,150 baris)"]
-        CSV3["dataset_transaksi.csv<br/>(1,150 baris)"]
+    subgraph Raw_Layer ["Lapisan Sumber Data Mentah (CSV Files)"]
+        CSV1["dataset_alat_berat_dw.csv<br/>(Log Penggunaan Alat Berat)"]
+        CSV2["dataset_production.csv<br/>(Log Hasil Produksi)"]
+        CSV3["dataset_transaksi.csv<br/>(Log Transaksi Keuangan)"]
     end
 
-    subgraph Staging_Layer ["📥 Lapisan Penampungan (Staging Layer)"]
-        STG1[("staging.EquipmentUsage")]
-        STG2[("staging.Production")]
-        STG3[("staging.FinancialTransaction")]
+    subgraph Staging_Layer ["Lapisan Staging (Skema staging)"]
+        STG1[("staging.EquipmentUsage<br/>(1,150 Records)")]
+        STG2[("staging.Production<br/>(1,150 Records)")]
+        STG3[("staging.FinancialTransaction<br/>(1,150 Records)")]
     end
 
-    subgraph ETL_Engine ["⚙️ Mesin ETL (Python / standalone_etl.py)"]
-        ETL["Pembersihan, Validasi Tipe Data,<br/>Generasi Surrogate Key & Lookup FK"]
+    subgraph ETL_Layer ["Lapisan Pemrosesan ETL (Python Engine)"]
+        ETL["Pembersihan Nilai Anomali / Null<br/>Standardisasi Format Tanggal<br/>Pemetaan Natural Key ke Surrogate Key"]
     end
 
-    subgraph DW_Star_Schema ["🏛️ Lapisan Data Warehouse (Star Schema)"]
-        subgraph Dimensions ["Tabel Dimensi (dim)"]
-            D1["dim.DimTime (830)"]
-            D2["dim.DimSite (1,747)"]
-            D3["dim.DimEquipment (6)"]
-            D4["dim.DimMaterial (5)"]
-            D5["dim.DimEmployee (10)"]
-            D6["dim.DimShift (3)"]
-            D7["dim.DimProject (50)"]
-            D8["dim.DimAccount (30)"]
+    subgraph DWH_Layer ["Lapisan Dimensional DWH (Star Schema)"]
+        subgraph Dim_Tables ["Tabel Dimensi (dim.*)"]
+            D1["dim.DimTime (830 baris)"]
+            D2["dim.DimSite (1,747 baris)"]
+            D3["dim.DimEquipment (6 baris)"]
+            D4["dim.DimMaterial (5 baris)"]
+            D5["dim.DimEmployee (10 baris)"]
+            D6["dim.DimShift (3 baris)"]
+            D7["dim.DimProject (50 baris)"]
+            D8["dim.DimAccount (30 baris)"]
         end
-        subgraph Facts ["Tabel Fakta (fact)"]
-            F1["fact.FactEquipmentUsage<br/>(236,892 records)"]
-            F2["fact.FactProduction<br/>(2,261 records)"]
-            F3["fact.FactFinancialTransaction<br/>(115,901 records)"]
+        subgraph Fact_Tables ["Tabel Fakta (fact.*)"]
+            F1["fact.FactEquipmentUsage<br/>(236,892 baris)"]
+            F2["fact.FactProduction<br/>(2,261 baris)"]
+            F3["fact.FactFinancialTransaction<br/>(115,901 baris)"]
         end
     end
 
-    subgraph Verification_Analytics ["📊 Validasi & Konsumsi Analitik"]
-        VAL["Uji Integritas Referensial<br/>(0 Orphan FK)"]
-        OLAP["Kueri Multidimensional<br/>(Slice, Dice, Roll-up, Drill-down, Pivot)"]
-        DASH["Dashboard & Reporting<br/>(Grafana / BI Tools)"]
+    subgraph Analytics_Layer ["Lapisan Verifikasi & Analitik OLAP"]
+        TEST["Uji Kepatuhan Kunci Asing<br/>(0 Orphan Foreign Keys)"]
+        OLAP["Kueri Analitik Multidimensional<br/>(Slice, Dice, Roll-up, Drill-down, Pivot)"]
     end
 
     CSV1 --> STG1
@@ -94,8 +99,8 @@ flowchart TD
     STG1 --> ETL
     STG2 --> ETL
     STG3 --> ETL
-    ETL --> Dimensions
-    ETL --> Facts
+    ETL --> Dim_Tables
+    ETL --> Fact_Tables
     D1 -.-> F1
     D2 -.-> F1
     D3 -.-> F1
@@ -108,57 +113,44 @@ flowchart TD
     D2 -.-> F3
     D7 -.-> F3
     D8 -.-> F3
-    Facts --> VAL
-    Facts --> OLAP
-    Facts --> DASH
+    Fact_Tables --> TEST
+    Fact_Tables --> OLAP
 ```
 
-### 2.2 Desain Dimensional Model (Star Schema)
+### 2.2 Desain Skema Bintang (Star Schema)
 
-Arsitektur data warehouse menggunakan pendekatan **Kimball Dimensional Modeling** berorientasi subjek proses bisnis utama pertambangan:
-1. **Fact Equipment Usage**: Mengukur efisiensi pemanfaatan alat berat, jam operasi, downtime, konsumsi bahan bakar, dan biaya pemeliharaan.
-2. **Fact Production**: Mengukur volume produksi bahan tambang (dalam ton/m3), biaya satuan (*unit cost*), dan target kuantitas per shift kerja.
-3. **Fact Financial Transaction**: Mengukur kinerja keuangan proyek tambang, varians antara biaya aktual vs rencana anggaran (*actual vs budgeted cost*).
+Pemodelan data diklasifikasikan ke dalam tiga proses bisnis operasional pertambangan:
 
-Setiap tabel fakta dihubungkan ke tabel dimensi menggunakan *surrogate key* integer (`*_key`) dengan relasi *one-to-many* (`1:N`) yang ketat dan divalidasi dengan integritas referensial foreign key.
+1. **Penggunaan Peralatan Tambang (`fact.FactEquipmentUsage`)**: Menyimpan metrik durasi operasional alat (*operating hours*), waktu henti kendala teknis (*downtime hours*), konsumsi bahan bakar (*fuel consumed*), serta biaya pemeliharaan (*maintenance cost*).
+2. **Hasil Produksi Pertambangan (`fact.FactProduction`)**: Mencatat volume material yang berhasil ditambang (*produced volume*), target produksi (*target volume*), dan biaya per satuan volume (*unit cost*).
+3. **Transaksi Keuangan Proyek (`fact.FactFinancialTransaction`)**: Mengukur realisasi pengeluaran kas terhadap anggaran proyek (*actual amount vs budgeted amount*), serta varians anggaran.
 
-### 2.3 Rincian Grain dan Tabel
+### 2.3 Definisi Grain, Kunci Utama, dan Integritas Relasi
 
-| Nama Tabel | Tipe Skema | Grain (Tingkat Granularitas Data) | Kunci Utama (PK) | Foreign Keys (FK) |
+Setiap tabel fakta dan dimensi memiliki tingkat rincian data (*grain*) serta batasan kunci (*constraints*) yang didefinisikan secara eksplisit:
+
+| Nama Tabel | Klasifikasi | Tingkat Rincian Data (Grain) | Primary Key (PK) | Foreign Keys (FK) Relasional |
 | :--- | :---: | :--- | :--- | :--- |
-| `dim.DimTime` | Dimensi | 1 baris per hari kalender unik | `time_key` (IDENTITY) | - |
-| `dim.DimSite` | Dimensi | 1 baris per lokasi tambang / quarry | `site_key` (IDENTITY) | - |
-| `dim.DimEquipment`| Dimensi | 1 baris per unit peralatan berat | `equipment_key` (IDENTITY) | - |
-| `dim.DimMaterial` | Dimensi | 1 baris per komoditas material tambang | `material_key` (IDENTITY) | - |
-| `dim.DimEmployee` | Dimensi | 1 baris per karyawan / operator | `employee_key` (IDENTITY) | - |
-| `dim.DimShift` | Dimensi | 1 baris per jadwal shift kerja | `shift_key` (IDENTITY) | - |
-| `dim.DimProject` | Dimensi | 1 baris per proyek eksplorasi tambang | `project_key` (IDENTITY) | - |
-| `dim.DimAccount` | Dimensi | 1 baris per akun bagan anggaran (COA) | `account_key` (IDENTITY) | - |
-| `fact.FactEquipmentUsage` | Fakta | 1 baris per aktivitas unit alat per site per hari | `equipment_usage_key` (PK) | `time_key`, `site_key`, `equipment_key` |
-| `fact.FactProduction` | Fakta | 1 baris per batch produksi per shift per material | `production_key` (PK) | `time_key`, `site_key`, `material_key`, `employee_key`, `shift_key` |
-| `fact.FactFinancialTransaction` | Fakta | 1 baris per transaksi finansial per akun proyek | `financial_key` (PK) | `time_key`, `site_key`, `project_key`, `account_key` |
+| `dim.DimTime` | Dimensi | 1 baris per tanggal kalender unik | `time_key` (IDENTITY) | - |
+| `dim.DimSite` | Dimensi | 1 baris per lokasi tambang / site unik | `site_key` (IDENTITY) | - |
+| `dim.DimEquipment` | Dimensi | 1 baris per tipe unit alat berat | `equipment_key` (IDENTITY) | - |
+| `dim.DimMaterial` | Dimensi | 1 baris per jenis komoditas material | `material_key` (IDENTITY) | - |
+| `dim.DimEmployee` | Dimensi | 1 baris per identitas operator tambang | `employee_key` (IDENTITY) | - |
+| `dim.DimShift` | Dimensi | 1 baris per jadwal giliran kerja (shift) | `shift_key` (IDENTITY) | - |
+| `dim.DimProject` | Dimensi | 1 baris per nomor proyek tambang | `project_key` (IDENTITY) | - |
+| `dim.DimAccount` | Dimensi | 1 baris per pos akun anggaran (COA) | `account_key` (IDENTITY) | - |
+| `fact.FactEquipmentUsage` | Fakta | Catatan log pemakaian unit per site per hari | `equipment_usage_key` | `time_key`, `site_key`, `equipment_key` |
+| `fact.FactProduction` | Fakta | Catatan batch produksi per shift per material | `production_key` | `time_key`, `site_key`, `material_key`, `employee_key`, `shift_key` |
+| `fact.FactFinancialTransaction` | Fakta | Catatan transaksi biaya per akun proyek | `financial_key` | `time_key`, `site_key`, `project_key`, `account_key` |
 
 ---
 
-## 3. PEMETAAN LANGKAH README KE PERINTAH OTOMATIS
+## 3. SPESIFIKASI TEKNIS LINGKUNGAN DAN PROSEDUR DEPLOYMENT
 
-Seluruh alur kerja telah diotomatisasi sehingga memenuhi prinsip **Zero-Touch Execution** dan **Reproducible**.
+### 3.1 Konfigurasi Parameter Lingkungan (.env)
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        ALUR EKSEKUSI RUNBOOK                           │
-├───────────────┬────────────────────────────────────────────────────────┤
-│ Langkah 1     │ Konfigurasi Environment Kredensial (.env)              │
-│ Langkah 2     │ Menjalankan Service Docker Compose (sqlserver, db_init)│
-│ Langkah 3     │ Otomasi Skema Star Schema via create-schema.sql        │
-│ Langkah 4     │ Eksekusi Pipeline ETL Python (standalone_etl.py)       │
-│ Langkah 5     │ Menjalankan Validasi Kepatuhan Otomatis (validate.sql) │
-│ Langkah 6     │ Menjalankan Kueri Multidimensional OLAP                │
-└───────────────┴────────────────────────────────────────────────────────┘
-```
+Untuk menjaga keamanan informasi dan mencegah *hardcoding* kredensial ke dalam repositori kode sumber, parameter koneksi diatur melalui berkas konfigurasi `.env`:
 
-### 3.1 Konfigurasi Environment (`.env`)
-Sesuai aturan dosen, dilarang melakukan hard-code kredensial. Seluruh konfigurasi database dimuat melalui file `.env`:
 ```env
 DB_HOST=localhost
 DB_PORT=1433
@@ -169,131 +161,153 @@ ACCEPT_EULA=Y
 MSSQL_PID=Developer
 ```
 
-### 3.2 Orkestrasi Container Docker Compose
-Perintah untuk mengaktifkan database Microsoft SQL Server 2022:
+Modul Python membaca berkas ini secara dinamis melalui pustaka `python-dotenv` menggunakan pemanggilan fungsi `os.getenv()`.
+
+### 3.2 Orkestrasi Layanan Basis Data (Docker Compose)
+
+Sistem basis data dijalankan pada kontainer terisolasi berbasis Microsoft SQL Server 2022 Developer Edition. Konfigurasi didefinisikan dalam berkas `docker-compose.yml` dan diaktifkan dengan perintah:
+
 ```powershell
-docker compose up -d sqlserver db_init
+docker compose up -d sqlserver
 ```
 
-### 3.3 Inisialisasi Skema DWH
-Pembuatan database dan 14 tabel dimensi/fakta dijalankan dengan perintah:
+Parameter alokasi sumber daya menetapkan port host `1433` dipetakan secara langsung ke port internal kontainer dengan mekanisme persistensi data volume Docker.
+
+### 3.3 Inisialisasi Skema Basis Data DWH
+
+Pembuatan basis data `PTXYZ_DataWarehouse` dan kompilasi DDL untuk seluruh skema (`dim`, `fact`, `staging`) dilakukan melalui utilitas `sqlcmd` di dalam kontainer:
+
 ```powershell
-# 1. Pembuatan Database
+# 1. Pembuatan Basis Data
 docker exec -it ptxyz_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourSecurePassword123!" -C -N -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'PTXYZ_DataWarehouse') CREATE DATABASE PTXYZ_DataWarehouse;"
 
-# 2. Pembuatan Skema Tabel
+# 2. Eksekusi Script Skema Tabel (14 Tabel)
 docker exec -it ptxyz_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourSecurePassword123!" -d PTXYZ_DataWarehouse -C -N -i /init-scripts/create-schema.sql
 ```
 
-### 3.4 Eksekusi Pipeline ETL
-Pemuatan data mentah CSV ke staging, pemetaan surrogate key, dan insersi ke tabel fakta:
+### 3.4 Eksekusi Pipeline Ekstraksi, Transformasi, dan Pemuatan (ETL)
+
+Pipeline ETL dijalankan menggunakan script Python `standalone_etl.py`. Script ini membaca berkas data mentah CSV, memuatnya ke dalam tabel staging, mengekstrak dimensi unik, membuat pemetaan surrogate key, dan memuat data teragregasi ke dalam tabel fakta:
+
 ```powershell
 python standalone_etl.py
 ```
 
-### 3.5 Validasi Kepatuhan Otomatis
-Menjalankan suite pengujian satu perintah:
+### 3.5 Prosedur Pengujian dan Validasi Integritas
+
+Pengujian sistem dilakukan secara otomatis menggunakan skrip SQL terstruktur `validate.sql` yang memeriksa kelengkapan baris data, integritas relasi foreign key, dan kesetaraan nilai agregat:
+
 ```powershell
 docker exec -it ptxyz_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourSecurePassword123!" -d PTXYZ_DataWarehouse -C -N -i /init-scripts/validate.sql
 ```
 
 ---
 
-## 4. BUKTI HASIL EKSEKUSI & KESETARAAN BENCHMARK
+## 4. HASIL PENGUJIAN, VERIFIKASI, DAN KESETARAAN DATA ACUAN
 
-### 4.1 Tabel Perbandingan Jumlah Baris Data (Benchmark vs Realisasi)
+### 4.1 Verifikasi Volume Data (Tabel Benchmark vs Hasil Implementasi)
 
-Pengujian menunjukkan kepatuhan **100.00% identik** terhadap benchmark resmi pada README repositori upstream:
+Pengujian kuantitatif menunjukkan bahwa seluruh tabel dimensi, fakta, dan staging pada basis data lokal memiliki jumlah rekaman data yang identik dengan nilai acuan pada dokumentasi resmi repositori upstream:
 
-| Entitas Tabel | Tipe | Benchmark README | Hasil Eksekusi Laptop | Kepatuhan |
+| Entitas Tabel | Lapisan Skema | Acuan Repositori Upstream | Hasil Eksekusi Sistem | Status Evaluasi |
 | :--- | :---: | :---: | :---: | :---: |
-| `dim.DimTime` | Dimensi | **830 records** | **830 records** | **MATCH 100%** |
-| `dim.DimSite` | Dimensi | **1,747 records** | **1,747 records** | **MATCH 100%** |
-| `dim.DimEquipment` | Dimensi | **6 records** | **6 records** | **MATCH 100%** |
-| `dim.DimMaterial` | Dimensi | **5 records** | **5 records** | **MATCH 100%** |
-| `dim.DimEmployee` | Dimensi | **10 records** | **10 records** | **MATCH 100%** |
-| `dim.DimShift` | Dimensi | **3 records** | **3 records** | **MATCH 100%** |
-| `dim.DimProject` | Dimensi | **50 records** | **50 records** | **MATCH 100%** |
-| `dim.DimAccount` | Dimensi | **30 records** | **30 records** | **MATCH 100%** |
-| `fact.FactEquipmentUsage` | Fakta | **236,892 records** | **236,892 records** | **MATCH 100%** |
-| `fact.FactProduction` | Fakta | **2,261 records** | **2,261 records** | **MATCH 100%** |
-| `fact.FactFinancialTransaction`| Fakta | **115,901 records** | **115,901 records** | **MATCH 100%** |
-| `staging.EquipmentUsage` | Staging | 1,150 records | 1,150 records | **MATCH 100%** |
-| `staging.Production` | Staging | 1,150 records | 1,150 records | **MATCH 100%** |
-| `staging.FinancialTransaction` | Staging | 1,150 records | 1,150 records | **MATCH 100%** |
+| `dim.DimTime` | Dimensi | 830 rekaman | 830 baris | Sesuai (100%) |
+| `dim.DimSite` | Dimensi | 1.747 rekaman | 1.747 baris | Sesuai (100%) |
+| `dim.DimEquipment` | Dimensi | 6 rekaman | 6 baris | Sesuai (100%) |
+| `dim.DimMaterial` | Dimensi | 5 rekaman | 5 baris | Sesuai (100%) |
+| `dim.DimEmployee` | Dimensi | 10 rekaman | 10 baris | Sesuai (100%) |
+| `dim.DimShift` | Dimensi | 3 rekaman | 3 baris | Sesuai (100%) |
+| `dim.DimProject` | Dimensi | 50 rekaman | 50 baris | Sesuai (100%) |
+| `dim.DimAccount` | Dimensi | 30 rekaman | 30 baris | Sesuai (100%) |
+| `fact.FactEquipmentUsage` | Fakta | 236.892 rekaman | 236.892 baris | Sesuai (100%) |
+| `fact.FactProduction` | Fakta | 2.261 rekaman | 2.261 baris | Sesuai (100%) |
+| `fact.FactFinancialTransaction` | Fakta | 115.901 rekaman | 115.901 baris | Sesuai (100%) |
+| `staging.EquipmentUsage` | Staging | 1.150 rekaman | 1.150 baris | Sesuai (100%) |
+| `staging.Production` | Staging | 1.150 rekaman | 1.150 baris | Sesuai (100%) |
+| `staging.FinancialTransaction` | Staging | 1.150 rekaman | 1.150 baris | Sesuai (100%) |
 
-### 4.2 Bukti Uji Integritas Referensial (Zero Orphan Check)
+### 4.2 Uji Integritas Referensial (Pemeriksaan Foreign Key Tanpa Orphan)
 
-Sesuai kriteria ketat dosen: *"semua baris fakta punya FK yang valid; 0 orphan"*. Berikut cuplikan output hasil uji SQL:
-
-```text
->>> [TEST 2] UJI INTEGRITAS REFERENSIAL (WAJIB 0 ORPHAN FK)
-Relasi_FK                              Orphan_Count Status         
--------------------------------------- ------------ ---------------
-FactEquipmentUsage -> DimTime                     0 PASS (0 Orphan)
-FactEquipmentUsage -> DimSite                     0 PASS (0 Orphan)
-FactEquipmentUsage -> DimEquipment                0 PASS (0 Orphan)
-FactProduction -> DimTime                         0 PASS (0 Orphan)
-FactProduction -> DimSite                         0 PASS (0 Orphan)
-FactProduction -> DimMaterial                     0 PASS (0 Orphan)
-FactProduction -> DimEmployee                     0 PASS (0 Orphan)
-FactProduction -> DimShift                        0 PASS (0 Orphan)
-FactFinancialTransaction -> DimTime               0 PASS (0 Orphan)
-FactFinancialTransaction -> DimSite               0 PASS (0 Orphan)
-FactFinancialTransaction -> DimProject            0 PASS (0 Orphan)
-FactFinancialTransaction -> DimAccount            0 PASS (0 Orphan)
-
->>> HASIL TEST 2: 100% SUKSES! Integritas Referensial Terjamin (Total 0 Orphan Records).
-```
-
-### 4.3 Bukti Uji Kesetaraan Agregat
-
-Kesesuaian metrik bisnis dan KPI operasional terhadap README:
+Pengujian integritas data dilakukan dengan melakukan evaluasi *anti-join* (`LEFT JOIN ... WHERE parent.key IS NULL`) pada seluruh relasi kunci asing antara tabel fakta dan tabel dimensi pendukungnya. Hasil eksekusi mencatat **0 orphan records** pada seluruh relasi:
 
 ```text
->>> [TEST 3] UJI KESETARAAN HASIL AGREGAT (README BENCHMARKS)
-Equipment_Efficiency_Percent   Total_Operating_Hours   Total_Downtime_Hours
-----------------------------   ---------------------   --------------------
-95.59% (Acuan README ~95.66%)  72,586,426.00 jam       3,344,770.00 jam
+UJI INTEGRITAS REFERENSIAL (FOREIGN KEY VALIDATION)
+Relasi Kunci Asing Antar Tabel          Jumlah Orphan   Status Integritas
+--------------------------------------  -------------   -----------------
+FactEquipmentUsage -> DimTime                       0   Valid (0 Orphan)
+FactEquipmentUsage -> DimSite                       0   Valid (0 Orphan)
+FactEquipmentUsage -> DimEquipment                  0   Valid (0 Orphan)
+FactProduction -> DimTime                           0   Valid (0 Orphan)
+FactProduction -> DimSite                           0   Valid (0 Orphan)
+FactProduction -> DimMaterial                       0   Valid (0 Orphan)
+FactProduction -> DimEmployee                       0   Valid (0 Orphan)
+FactProduction -> DimShift                          0   Valid (0 Orphan)
+FactFinancialTransaction -> DimTime                 0   Valid (0 Orphan)
+FactFinancialTransaction -> DimSite                 0   Valid (0 Orphan)
+FactFinancialTransaction -> DimProject              0   Valid (0 Orphan)
+FactFinancialTransaction -> DimAccount              0   Valid (0 Orphan)
 
-Tipe_Material   Jumlah_Transaksi   Total_Volume_Produksi
--------------   ----------------   ---------------------
-Metal           1,811 transaksi    477,837.00 ton/m3
-Ore               450 transaksi    118,363.00 ton/m3
-
-Nama_Site         Wilayah      Volume_Produksi
----------------   ----------   ---------------
-Quarry A          Sumatera     266,984.00 ton/m3
-Site Batu B       Kalimantan   256,888.00 ton/m3
-Area Tambang C    Papua         72,328.00 ton/m3
+Hasil Evaluasi Integritas: Lolos Penuh (Integritas Relasional Terpelihara 100%).
 ```
+
+### 4.3 Verifikasi Agregasi Metrik Operasional dan Keuangan
+
+Hasil perhitungan ringkasan operasional menunjukkan kesetaraan metrik terhadap indikator kinerja utama (KPI) industri pertambangan:
+
+1. **Efisiensi Armada Alat Berat:**
+   - Total Jam Operasi (*Operating Hours*): `72.586.426,00 jam`
+   - Total Jam Henti (*Downtime Hours*): `3.344.770,00 jam`
+   - Rasio Efisiensi Pemanfaatan Alat: `95,59%` (Sesuai dengan toleransi baseline acuan ~95,66%)
+
+2. **Ringkasan Produksi Berdasarkan Tipe Material:**
+   - Komoditas Metal: `1.811 transaksi` | Total Volume: `477.837,00 ton/m3`
+   - Komoditas Ore: `450 transaksi` | Total Volume: `118.363,00 ton/m3`
+
+3. **Distribusi Volume Produksi Berdasarkan Lokasi:**
+   - Quarry A (Region Sumatera): `266.984,00 ton/m3`
+   - Site Batu B (Region Kalimantan): `256.888,00 ton/m3`
+   - Area Tambang C (Region Papua): `72.328,00 ton/m3`
 
 ---
 
-## 5. EKSEKUSI KUERI MULTIDIMENSIONAL OLAP
+## 5. ANALISIS KUERI MULTIDIMENSIONAL (ONLINE ANALYTICAL PROCESSING - OLAP)
 
-Kueri OLAP dieksekusi secara otomatis menggunakan skrip `init-scripts/olap_queries.sql`:
+Seluruh kueri analitik multidimensional disusun dalam berkas `init-scripts/olap_queries.sql` dan dapat dieksekusi melalui SQL Server command-line:
 
 ```powershell
 docker exec -it ptxyz_sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "YourSecurePassword123!" -d PTXYZ_DataWarehouse -C -N -i /init-scripts/olap_queries.sql
 ```
 
-### 5.1 Slice (Pemotongan Dimensi Tunggal)
-Memotong kubus data hanya untuk dimensi **Wilayah = 'Sumatera'**:
+### 5.1 Operasi Slice (Pemfilteran Berdasarkan Wilayah Sumatera)
+
+Operasi *Slice* memotong kubus data multidimensi dengan menetapkan nilai konstan pada satu dimensi tertentu, yaitu wilayah geografis `Sumatera`:
+
 ```sql
-SELECT s.region, m.material_name, COUNT(*) as Total_Operasi, SUM(f.produced_volume) as Total_Volume
+SELECT 
+    s.region, 
+    m.material_name, 
+    COUNT(*) AS total_operasi, 
+    SUM(f.produced_volume) AS total_volume
 FROM fact.FactProduction f
 JOIN dim.DimSite s ON f.site_key = s.site_key
 JOIN dim.DimMaterial m ON f.material_key = m.material_key
 WHERE s.region = 'Sumatera'
 GROUP BY s.region, m.material_name;
 ```
-*Hasil:* Produksi di region Sumatera menghasilkan total volume **266,984.00 ton/m3**.
 
-### 5.2 Dice (Sub-cube Multi Kriteria)
-Memilih sub-cube data berdasarkan 2 kondisi kriteria: **Wilayah = 'Kalimantan' AND Shift = 'Shift 1'**:
+*Interpretasi Analitik:* Seluruh aktivitas penambangan di konsesi Sumatera terkonsentrasi pada komoditas material dengan total akumulasi volume mencapai 266.984,00 ton/m3.
+
+### 5.2 Operasi Dice (Kombinasi Wilayah Kalimantan dan Shift 1)
+
+Operasi *Dice* membentuk sub-kubus data baru melalui pendefinisian kriteria seleksi pada dua dimensi atau lebih secara simultan:
+
 ```sql
-SELECT s.region, sh.shift_name, m.material_type, SUM(f.produced_volume) as Volume, AVG(f.unit_cost) as Unit_Cost
+SELECT 
+    s.region, 
+    sh.shift_name, 
+    m.material_type, 
+    SUM(f.produced_volume) AS total_volume, 
+    AVG(f.unit_cost) AS rata_rata_biaya_satuan
 FROM fact.FactProduction f
 JOIN dim.DimSite s ON f.site_key = s.site_key
 JOIN dim.DimShift sh ON f.shift_key = sh.shift_key
@@ -302,91 +316,120 @@ WHERE s.region = 'Kalimantan' AND sh.shift_name = 'Shift 1'
 GROUP BY s.region, sh.shift_name, m.material_type;
 ```
 
-### 5.3 Roll-up (Hierarki Waktu: Tahun -> Kuartal -> Bulan)
-Menghitung agregasi berjenjang ke level yang lebih tinggi:
+*Interpretasi Analitik:* Kueri ini memungkinkan pemantauan biaya satuan rata-rata (*average unit cost*) pada operasional pagi hari di regional Kalimantan untuk mengevaluasi efisiensi biaya produksi antar-shift.
+
+### 5.3 Operasi Roll-up (Hierarki Waktu: Tahun, Kuartal, Bulan)
+
+Operasi *Roll-up* melakukan agregasi data dari tingkat granularitas rendah ke tingkat granularitas yang lebih tinggi mengikuti hierarki dimensi waktu:
+
 ```sql
-SELECT t.year, t.quarter, t.month_name, SUM(f.produced_volume) as Volume_Produksi
+SELECT 
+    t.year, 
+    t.quarter, 
+    t.month_name, 
+    SUM(f.produced_volume) AS volume_produksi
 FROM fact.FactProduction f
 JOIN dim.DimTime t ON f.time_key = t.time_key
 GROUP BY ROLLUP (t.year, t.quarter, t.month_name);
 ```
-*Hasil:* Terjadi agregasi produksi dari tahun 2026 (197,957 unit), 2027 (197,957 unit), dan 2028 (88,262 unit).
 
-### 5.4 Drill-down (Analisis Rinci Per Karyawan & Site)
-Menelusuri performa dari level site ke tingkat individual operator dan shift:
+*Interpretasi Analitik:* Pola data historis memperlihatkan konsistensi volume produksi pada tahun 2026 dan 2027 masing-masing sebesar 197.957 unit, sebelum mencatatkan volume 88.262 unit pada periode berjalan tahun 2028.
+
+### 5.4 Operasi Drill-down (Analisis Tingkat Operator dan Lokasi)
+
+Operasi *Drill-down* menelusuri data ringkasan ke tingkat rincian yang lebih mendalam untuk menganalisis kontribusi individu tenaga kerja:
+
 ```sql
-SELECT TOP 10 s.site_name, e.employee_name, e.position, sh.shift_name, SUM(f.produced_volume) as Total_Produksi
+SELECT TOP 10 
+    s.site_name, 
+    e.employee_name, 
+    e.position, 
+    sh.shift_name, 
+    SUM(f.produced_volume) AS total_produksi
 FROM fact.FactProduction f
 JOIN dim.DimSite s ON f.site_key = s.site_key
 JOIN dim.DimEmployee e ON f.employee_key = e.employee_key
 JOIN dim.DimShift sh ON f.shift_key = sh.shift_key
 GROUP BY s.site_name, e.employee_name, e.position, sh.shift_name
-ORDER BY Total_Produksi DESC;
+ORDER BY total_produksi DESC;
 ```
-*Hasil:* Operator Randall Howard dan James Johnson di Quarry A dan Site Batu B mencatat produktivitas tertinggi (>13,000 unit).
 
-### 5.5 Pivot (Cross-tabulation Wilayah vs Tipe Material)
-Matriks tabulasi silang antara Wilayah geografis dan Komoditas:
+*Interpretasi Analitik:* Operator utama seperti Randall Howard dan James Johnson di Quarry A dan Site Batu B teridentifikasi sebagai kontributor produktivitas tertinggi dengan akumulasi volume melebihi 13.000 unit produksi.
+
+### 5.5 Operasi Pivot (Cross-Tabulation Komoditas per Wilayah Tambang)
+
+Operasi *Pivot* mengubah orientasi data multidimensi dari representasi baris menjadi matriks tabel silang:
+
 ```sql
-SELECT Wilayah, ISNULL([Metal], 0) AS Produksi_Metal, ISNULL([Ore], 0) AS Produksi_Ore, (ISNULL([Metal], 0) + ISNULL([Ore], 0)) AS Total_Kumulatif
+SELECT 
+    Wilayah, 
+    ISNULL([Metal], 0) AS Produksi_Metal, 
+    ISNULL([Ore], 0) AS Produksi_Ore, 
+    (ISNULL([Metal], 0) + ISNULL([Ore], 0)) AS Total_Kumulatif
 FROM (
-    SELECT s.region AS Wilayah, m.material_type AS Tipe_Material, f.produced_volume AS Volume
+    SELECT 
+        s.region AS Wilayah, 
+        m.material_type AS Tipe_Material, 
+        f.produced_volume AS Volume
     FROM fact.FactProduction f
     JOIN dim.DimSite s ON f.site_key = s.site_key
     JOIN dim.DimMaterial m ON f.material_key = m.material_key
 ) AS SourceTable
-PIVOT (SUM(Volume) FOR Tipe_Material IN ([Metal], [Ore])) AS PivotTable
+PIVOT (
+    SUM(Volume) FOR Tipe_Material IN ([Metal], [Ore])
+) AS PivotTable
 ORDER BY Total_Kumulatif DESC;
 ```
-*Hasil Matriks Pivot:*
-* **Sumatera**: Metal = 208,050.00 | Ore = 58,934.00 | Total = **266,984.00**
-* **Kalimantan**: Metal = 213,748.00 | Ore = 43,140.00 | Total = **256,888.00**
-* **Papua**: Metal = 56,039.00 | Ore = 16,289.00 | Total = **72,328.00**
+
+*Matriks Hasil Tabulasi Silang:*
+- **Sumatera:** Logam (Metal) = 208.050,00 ton/m3 | Bijih (Ore) = 58.934,00 ton/m3 | Total = **266.984,00 ton/m3**
+- **Kalimantan:** Logam (Metal) = 213.748,00 ton/m3 | Bijih (Ore) = 43.140,00 ton/m3 | Total = **256.888,00 ton/m3**
+- **Papua:** Logam (Metal) = 56.039,00 ton/m3 | Bijih (Ore) = 16.289,00 ton/m3 | Total = **72.328,00 ton/m3**
 
 ---
 
-## 6. KUALITAS ETL & DATA QUALITY HANDLING
+## 6. PENANGANAN KUALITAS DATA (DATA QUALITY) DAN TRANSFORMASI
 
-Pipeline ETL (`standalone_etl.py`) menerapkan standar kualitas data tingkat industri:
-1. **Pencegahan Data Duplikat**: Sebelum pemuatan, seluruh dimensi menggunakan query `WHERE NOT EXISTS` untuk menjamin idempotensi (data tidak terduplikasi bila script dijalankan ulang).
-2. **Standardisasi Format Tanggal**: Mengonversi kolom tanggal yang bervariasi (`yyyyMMdd`, `ISO string`) ke format standar SQL Server `DATE` dan `DATETIME2`.
-3. **Surrogate Key Generation**: Menggunakan surrogate key otomatis (`IDENTITY(1,1)`) untuk mengisolasi data warehouse dari perubahan kunci natural operasional.
-4. **Logging Komprehensif**: Seluruh tahapan ETL mencatat log eksekusi secara real-time ke console dan file `etl_execution.log` ber-encoding UTF-8.
+Proses ETL pada `standalone_etl.py` mengimplementasikan serangkaian validasi dan pembersihan data guna menjamin integritas repositori analitik:
+
+1. **Jaminan Idempotensi dan Pencegahan Redundansi:** Pemuatan data dimensi menerapkan klausa `WHERE NOT EXISTS` sebelum eksekusi insersi, sehingga pipeline dapat dijalankan berulang kali tanpa memicu duplikasi data dimensi.
+2. **Normalisasi dan Konversi Tipe Data Temporal:** Kolom tanggal yang memiliki disparitas format pada berkas mentah dikonversi secara seragam ke dalam format standar ISO `DATE` dan `DATETIME2`.
+3. **Isolasi Perubahan Sumber melalui Surrogate Key:** Penggunaan kolom identitas bertipe integer (`IDENTITY(1,1)`) mengisolasi entitas data warehouse dari fluktuasi maupun format tidak teratur pada kunci bisnis sistem operasional.
+4. **Pencatatan Riwayat Eksekusi (Logging):** Seluruh proses pemuatan data mencatat statistik pemrosesan ke dalam terminal standar serta berkas persisten `etl_execution.log` dengan konfigurasi encoding UTF-8 untuk mencegah kesalahan representasi karakter sistem.
 
 ---
 
-## 7. KENDALA TEKNIS, ANALISIS AKAR MASALAH & SOLUSI
+## 7. DOKUMENTASI KENDALA TEKNIS DAN MITIGASI SISTEM
 
-Selama proses replikasi dan implementasi, ditemui beberapa tantangan teknis nyata yang berhasil diselesaikan dengan baik:
+Selama proses replikasi dan implementasi arsitektur data warehouse pada lingkungan komputasi lokal, sejumlah kendala teknis teridentifikasi dan berhasil diselesaikan melalui analisis akar masalah (*root cause analysis*):
 
-| No | Kendala yang Dihadapi | Akar Masalah (Root Cause) | Solusi Teruji & Pencegahan |
+| No | Gejala Permasalahan | Akar Masalah (Root Cause) | Tindakan Mitigasi dan Solusi |
 | :---: | :--- | :--- | :--- |
-| **1** | Error `write ... meta.db: input/output error` saat Docker pull | Drive `C:` laptop kehabisan kapasitas penyimpanan (tersisa hanya 0.01 GB / 10 MB). | Membersihkan file temporer dan memindahkan virtual disk Docker ke Drive `D:` yang memiliki sisa ruang longgar (79 GB). |
-| **2** | Status Docker API `500 Internal Server Error` | File database internal Docker (`meta.db`) korup akibat proses penulisan terpotong saat disk penuh. | Melakukan *clean unregister* pada distro WSL `docker-desktop` dan menginisialisasi ulang engine dalam kondisi bersih. |
-| **3** | Shell script error `\r: command not found` di dalam container | Git Windows mengonversi karakter line ending file shell (`init-db.sh`) menjadi CRLF. | Melakukan konversi line ending dari format DOS/CRLF menjadi Unix/LF secara terprogram. |
-| **4** | Error koneksi database saat pertama kali diakses | Kredensial password `SA_PASSWORD` pada `.env` dan healthcheck docker compose sempat berbeda. | Melakukan harmonisasi file `.env` dengan kredensial yang valid serta memperbarui skrip koneksi Python menggunakan `python-dotenv`. |
-| **5** | Warning `UnicodeEncodeError charmap` di terminal Windows | Terminal PowerShell Windows default menggunakan encoding non-UTF8 saat mencetak emoji log. | Menambahkan konfigurasi `encoding='utf-8'` pada logging handler di `standalone_etl.py`. |
+| **1** | Kegagalan penarikan image Docker (`meta.db: input/output error`). | Partisi Drive `C:` mengalami saturasi penyimpanan hingga tersisa hanya 10 MB, menghambat alokasi blok disk virtual WSL. | Mengalokasikan ulang virtual disk distro WSL `docker-desktop` ke partisi Drive `D:` yang memiliki ketersediaan ruang penyimpanan lebih besar (>70 GB). |
+| **2** | Galat Docker Engine API `500 Internal Server Error`. | Berkas basis data metadata internal daemon Docker mengalami korupsi akibat pemutusan operasi I/O ketika partisi penuh. | Melakukan deregistrasi bersih (*unregister clean-up*) terhadap instance WSL terkait dan memulai ulang engine kontainer dalam status konsisten. |
+| **3** | Kesalahan sintaks shell `\r: command not found` pada kontainer. | Utilitas Git pada sistem operasi Windows mengonversi karakter akhir baris (*line ending*) berkas shell `init-db.sh` dari format Unix (LF) menjadi DOS (CRLF). | Melakukan konversi format karakter akhir baris kembali ke standar LF dan mengonfigurasi properti `core.autocrlf` pada lingkungan kerja. |
+| **4** | Autentikasi koneksi basis data ditolak pada inisiasi awal. | Terdapat diskrepansi nilai kata sandi `SA_PASSWORD` antara berkas konfigurasi `.env` dan script healthcheck Docker. | Melakukan sinkronisasi nilai variabel lingkungan pada seluruh berkas konfigurasi serta memperbarui pustaka pembaca konfigurasi berbasis `python-dotenv`. |
+| **5** | Galat karakter `UnicodeEncodeError: 'charmap'` pada terminal host. | Handler standar logging Python menggunakan default code-page Windows saat mencetak karakter simbolik. | Mengonfigurasi parameter `encoding='utf-8'` secara eksplisit pada stream handler modul logging Python. |
 
 ---
 
-## 8. PANDUAN REPRODUCIBILITY (ONE-COMMAND RUNNER)
+## 8. OTOMASI EKSEKUSI SISTEM (AUTOMATION RUNNER)
 
-Untuk kemudahan dosen dan penguji dalam mereplikasi seluruh sistem dari nol (*cold start*), disediakan skrip runner otomatis `run_all.ps1`.
+Untuk memudahkan replikasi pengujian sistem secara berulang dari kondisi awal (*cold start*), repositori dilengkapi dengan berkas skrip PowerShell terotomasi `run_all.ps1`.
 
-### Perintah Sekali Jalan:
+### Perintah Eksekusi:
 ```powershell
 .\run_all.ps1
 ```
 
-### Logika yang Dijalankan oleh `run_all.ps1`:
-1. Memeriksa keberadaan file `.env`.
-2. Menyalakan container SQL Server (`docker compose up -d sqlserver`).
-3. Menunggu database engine siap menerima koneksi (*healthcheck loop*).
-4. Menjalankan inisialisasi skema `create-schema.sql`.
-5. Mengeksekusi pipeline ETL `standalone_etl.py`.
-6. Menjalankan suite validasi otomatis `validate.sql`.
-7. Menjalankan kueri analitik multidimensional `olap_queries.sql`.
-8. Menampilkan laporan akhir status keberhasilan.
+### Rangkaian Prosedur yang Dijalankan:
+1. Memvalidasi ketersediaan berkas konfigurasi lingkungan `.env`.
+2. Menginisiasi kontainer layanan Microsoft SQL Server 2022.
+3. Melakukan *polling* kesiapan port dan layanan basis data (*engine healthcheck loop*).
+4. Mengeksekusi pembuatan basis data dan kompilasi skema DWH (`create-schema.sql`).
+5. Menjalankan pipeline ETL ekstraksi dan pemuatan data (`standalone_etl.py`).
+6. Menjalankan skrip validasi integritas data dan foreign key (`validate.sql`).
+7. Menghasilkan ringkasan status operasional dan kepatuhan sistem.
 
 ---
-*Dokumentasi ini disusun secara komprehensif sebagai bukti kepatuhan penuh terhadap ketentuan tugas Data Warehouse Kecerdasan Bisnis 2026.*
+*Dokumentasi teknis ini disusun sebagai bagian dari evaluasi tugas praktikum mata kuliah Kecerdasan Bisnis, Universitas Lambung Mangkurat.*
